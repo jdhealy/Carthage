@@ -74,7 +74,7 @@ class XcodeSpec: QuickSpec {
 			let output = launchTask(TaskDescription(launchPath: "/usr/bin/otool", arguments: [ "-fv", buildFolderURL.URLByAppendingPathComponent("iOS/ReactiveCocoaLayout.framework/ReactiveCocoaLayout").path! ]))
 				.map { NSString(data: $0, encoding: NSStringEncoding(NSUTF8StringEncoding))! }
 				.first()
-				.value()!
+				.value() ?? ""
 
 			expect(output).to(contain("architecture i386"))
 			expect(output).to(contain("architecture armv7"))
