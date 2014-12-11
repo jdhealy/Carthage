@@ -1,0 +1,17 @@
+diff --git a/Task.swift b/Task Edited.swift
+index adb24c5..9dc3e93 100644
+--- a/Task.swift
++++ b/Task Edited.swift
+@@ -38,6 +38,12 @@ public struct TaskDescription {
+ 	public var standardInput: ColdSignal<NSData>?
+
+ 	public init(launchPath: String, arguments: [String] = [], workingDirectoryPath: String? = nil, environment: [String: String]? = nil, standardInput: ColdSignal<NSData>? = nil) {
++		dump((
++			launchPath,
++			arguments,
++			workingDirectoryPath,
++			environment
++		))
+ 		self.launchPath = launchPath
+ 		self.arguments = arguments
+ 		self.workingDirectoryPath = workingDirectoryPath
