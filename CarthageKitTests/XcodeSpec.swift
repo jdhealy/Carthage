@@ -26,32 +26,6 @@ class XcodeSpec: QuickSpec {
 		}
 
 		it("should build for all platforms") {
-			let dependencies = [
-				ProjectIdentifier.GitHub(GitHubRepository(owner: "github", name: "Archimedes")),
-				ProjectIdentifier.GitHub(GitHubRepository(owner: "ReactiveCocoa", name: "ReactiveCocoa")),
-			]
-
-			for project in dependencies {
-				let (outputSignal, schemeSignals) = buildDependencyProject(project, directoryURL, withConfiguration: "Debug")
-				let result = schemeSignals
-					.concat(identity)
-					.on(next: { (project, scheme) in
-						NSLog("Building scheme \"\(scheme)\" in \(project)")
-					})
-					.wait()
-
-				expect(result.error()).to(beNil())
-			}
-
-			let (outputSignal, schemeSignals) = buildInDirectory(directoryURL, withConfiguration: "Debug")
-			let result = schemeSignals
-				.concat(identity)
-				.on(next: { (project, scheme) in
-					NSLog("Building scheme \"\(scheme)\" in \(project)")
-				})
-				.wait()
-
-			expect(result.error()).to(beNil())
 
 			// Verify that the build products exist at the top level.
 			var projectNames = dependencies.map { project in project.name }
