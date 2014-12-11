@@ -186,8 +186,9 @@ build_scheme ()
         # Unit tests aren't supported.
         action=build
     fi
-
-    run_xctool $sdkflag -scheme "$scheme" $action
+    
+    run_xctool $sdkflag -scheme "$scheme" $action -reporter junit:/var/tmp/output.junit.text
+    cat /var/tmp/output.junit.text
 }
 
 export -f build_scheme
