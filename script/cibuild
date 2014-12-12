@@ -199,9 +199,10 @@ def __lldb_init_module(debugger, session_dict):
 EOF
     
     tee /tmp/lldb.source.text <<EOF
-breakpoint set --file Task.swift --line 112
 command script import /tmp/printFrameVariables.py
-breakpoint command add 1 -o 'printFrameVariables'
+breakpoint set --name V12ReactiveTask15TaskDescription
+breakpoint command add 1 -o 'breakpoint set --file Task.swift --line 314'
+breakpoint command add 2 -o 'printFrameVariables'
 c
 EOF
     
