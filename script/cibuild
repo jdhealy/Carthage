@@ -188,12 +188,19 @@ build_scheme ()
     fi
     
     tee /tmp/printFrameVariables.py <<EOF
+def setBreakpointForTask(debugger, command, result, internal_dict):
+  debugger.HandleCommand("breakpoint set --file Task.swift --line 314")
+  debugger.HandleCommand("breakpoint command add 2 -o 'printFrameVariables'")
+  return None
+
 def printFrameVariables(debugger, command, result, internal_dict):
   debugger.HandleCommand("frame variable --depth 3")
   debugger.HandleCommand("continue")
   return None
 
 def __lldb_init_module(debugger, session_dict):
+
+  debugger.HandleCommand("command script add -f printFrameVariables.setBreakpointForTask setBreakpointForTask")
   debugger.HandleCommand("command script add -f printFrameVariables.printFrameVariables printFrameVariables")
   return None
 EOF
@@ -201,9 +208,7 @@ EOF
     tee /tmp/lldb.source.text <<EOF
 command script import /tmp/printFrameVariables.py
 breakpoint set --one-shot --func-regex run
-c
-breakpoint set --file Task.swift --line 314
-breakpoint command add 2 -o 'printFrameVariables'
+breakpoint command add 1 -o 'setBreakpointForTask'
 c
 EOF
     
