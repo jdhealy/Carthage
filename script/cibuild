@@ -205,7 +205,7 @@ breakpoint command add 1 -o 'printFrameVariables'
 c
 EOF
     
-    lldb --wait-for --attach-name xctest --source /tmp/lldb.source.text >| /tmp/lldb.output.text' &
+    lldb --wait-for --attach-name xctest --source /tmp/lldb.source.text >| /tmp/lldb.output.text &
     
     run_xctool $sdkflag -scheme "$scheme" $action
     local xcode_return=$?
