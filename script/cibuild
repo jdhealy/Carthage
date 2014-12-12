@@ -187,16 +187,32 @@ build_scheme ()
         action=build
     fi
     
-    zsh -c 'lldb --wait-for --attach-name xctest --source =(cat <<-EOF
-	    breakpoint set --file Task.swift --line 315
-	    breakpoint command add 1
-	    frame variable --depth 3
-	    c
-	    DONE
-	    c
-    EOF) >| /tmp/lldb.output.text' &
+    tee /tmp/printFrameVariables.py <<EOF
+def printFrameVariables(debugger, command, result, internal_dict):
+  debugger.HandleCommand("frame variable --depth 3")
+  debugger.HandleCommand("continue")
+  return None
+
+def __lldb_init_module(debugger, session_dict):
+  debugger.HandleCommand("command script add -f printFrameVariables.printFrameVariables printFrameVariables")
+  return None
+EOF
+    
+    tee /tmp/lldb.source.text <<EOF
+breakpoint set --file Task.swift --line 112
+command script import /tmp/printFrameVariables.py
+breakpoint command add 1 -o 'printFrameVariables'
+c
+EOF
+    
+    lldb --wait-for --attach-name xctest --source  >| /tmp/lldb.output.text' &
+    
     run_xctool $sdkflag -scheme "$scheme" $action
+    local xcode_return=$?
+    
     cat /tmp/lldb.output.text
+    
+    exit $xcode_return
 }
 
 export -f build_scheme
