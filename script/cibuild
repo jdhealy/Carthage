@@ -200,6 +200,7 @@ EOF
     
     tee /tmp/lldb.source.text <<EOF
 command script import /tmp/printFrameVariables.py
+image list
 finish
 finish
 finish
