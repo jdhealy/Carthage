@@ -188,13 +188,11 @@ build_scheme ()
     fi
     
     screen -d -m -S lldb - zsh -c 'lldb --wait-for --attach-name xctest --source =(cat <<-EOF
-	    breakpoint set --file Task.swift --line 312
-    
+	    breakpoint set --file Task.swift --line 315
 	    breakpoint command add 1
 	    frame variable --depth 3
 	    c
 	    DONE
-        
 	    c
     EOF) >| /tmp/lldb.output.text'
     run_xctool $sdkflag -scheme "$scheme" $action
