@@ -188,7 +188,7 @@ build_scheme ()
     fi
     
     lldb --wait-for --attach-name xctest --source =(cat <<-EOF
-	    breakpoint set --file Task.swift --line 112
+	    breakpoint set --file Task.swift --line 312
     
 	    breakpoint command add 1
 	    frame variable --depth 3
