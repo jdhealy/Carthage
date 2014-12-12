@@ -187,7 +187,7 @@ build_scheme ()
         action=build
     fi
     
-    lldb --wait-for --attach-name xctest --source =(cat <<-EOF
+    zsh -c 'lldb --wait-for --attach-name xctest --source =(cat <<-EOF
 	    breakpoint set --file Task.swift --line 312
     
 	    breakpoint command add 1
@@ -196,7 +196,7 @@ build_scheme ()
 	    DONE
         
 	    c
-    EOF) >| /tmp/lldb.output.text &
+    EOF) >| /tmp/lldb.output.text' &
     run_xctool $sdkflag -scheme "$scheme" $action
     cat /tmp/lldb.output.text
 }
