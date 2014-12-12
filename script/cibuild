@@ -200,23 +200,9 @@ EOF
     
     tee /tmp/lldb.source.text <<EOF
 command script import /tmp/printFrameVariables.py
-image list
-finish
-finish
-finish
-finish
-finish
-finish
-finish
-finish
-finish
-finish
-finish
-finish
-finish
-finish
-finish
-breakpoint command add 1 -o 'breakpoint set --file Task.swift --line 314'
+breakpoint set --one-shot --func-regex run
+c
+breakpoint set --file Task.swift --line 314
 breakpoint command add 2 -o 'printFrameVariables'
 c
 EOF
