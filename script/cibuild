@@ -186,8 +186,19 @@ build_scheme ()
         # Unit tests aren't supported.
         action=build
     fi
-
+    
+    lldb --wait-for --attach-name xctest --source =(cat <<-EOF
+	    breakpoint set --file Task.swift --line 112
+    
+	    breakpoint command add 1
+	    frame variable --depth 3
+	    c
+	    DONE
+        
+	    c
+    EOF) >| /tmp/lldb.output.text &
     run_xctool $sdkflag -scheme "$scheme" $action
+    cat /tmp/lldb.output.text
 }
 
 export -f build_scheme
