@@ -200,7 +200,21 @@ EOF
     
     tee /tmp/lldb.source.text <<EOF
 command script import /tmp/printFrameVariables.py
-breakpoint set --name V12ReactiveTask15TaskDescription
+finish
+finish
+finish
+finish
+finish
+finish
+finish
+finish
+finish
+finish
+finish
+finish
+finish
+finish
+finish
 breakpoint command add 1 -o 'breakpoint set --file Task.swift --line 314'
 breakpoint command add 2 -o 'printFrameVariables'
 c
