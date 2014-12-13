@@ -1,17 +1,14 @@
-diff --git a/Task.swift b/Task Edited.swift
-index adb24c5..9dc3e93 100644
+diff --git a/Task.swift b/Task-Edited.swift
+index adb24c5..d82b568 100644
 --- a/Task.swift
-+++ b/Task Edited.swift
-@@ -38,6 +38,12 @@ public struct TaskDescription {
- 	public var standardInput: ColdSignal<NSData>?
++++ b/Task-Edited.swift
+@@ -312,6 +312,9 @@ public func launchTask(taskDescription: TaskDescription, standardOutput: SinkOf<
+ 							let errorString = (stderrData.length > 0 ? NSString(data: stderrData, encoding: NSUTF8StringEncoding) as String? : nil) ?? ""
 
- 	public init(launchPath: String, arguments: [String] = [], workingDirectoryPath: String? = nil, environment: [String: String]? = nil, standardInput: ColdSignal<NSData>? = nil) {
-+		dump((
-+			launchPath,
-+			arguments,
-+			workingDirectoryPath,
-+			environment
-+		))
- 		self.launchPath = launchPath
- 		self.arguments = arguments
- 		self.workingDirectoryPath = workingDirectoryPath
+ 							var description = "A shell task failed with exit code \(terminationStatus)"
++
++							dump((description, errorString))
++
+ 							if !errorString.isEmpty {
+ 								description += ":\n\(errorString)"
+ 							}
