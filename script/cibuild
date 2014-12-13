@@ -89,6 +89,10 @@ main ()
 
 import_certs ()
 {
+    
+    echo '• TRAVIS_SECURE_ENV_VARS:' $TRAVIS_SECURE_ENV_VARS
+    echo -n '• KEY_PASSWORD:'; echo -n $KEY_PASSWORD | xxd
+    
     # If this environment variable is missing, we must not be running on Travis.
     if [ -z "$KEY_PASSWORD" ]
     then
