@@ -1,5 +1,5 @@
 diff --git a/Task.swift b/Task-Edited.swift
-index adb24c5..d82b568 100644
+index adb24c5..cd5db06 100644
 --- a/Task.swift
 +++ b/Task-Edited.swift
 @@ -312,6 +312,9 @@ public func launchTask(taskDescription: TaskDescription, standardOutput: SinkOf<
@@ -7,7 +7,7 @@ index adb24c5..d82b568 100644
 
  							var description = "A shell task failed with exit code \(terminationStatus)"
 +
-+							dump((description, errorString))
++							NSLog("errorString: «\(errorString)», description: «\(description)»")
 +
  							if !errorString.isEmpty {
  								description += ":\n\(errorString)"
