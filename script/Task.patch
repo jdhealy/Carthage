@@ -1,13 +1,16 @@
 diff --git a/Task.swift b/Task-Edited.swift
-index adb24c5..cd5db06 100644
+index adb24c5..72d276b 100644
 --- a/Task.swift
 +++ b/Task-Edited.swift
-@@ -312,6 +312,9 @@ public func launchTask(taskDescription: TaskDescription, standardOutput: SinkOf<
+@@ -311,7 +311,12 @@ public func launchTask(taskDescription: TaskDescription, standardOutput: SinkOf<
+ 						} else {
  							let errorString = (stderrData.length > 0 ? NSString(data: stderrData, encoding: NSUTF8StringEncoding) as String? : nil) ?? ""
 
++							let _makeString = { ($0.length > 0 ? NSString(data: $0, encoding: NSUTF8StringEncoding) as String? : nil) ?? "" }
++
  							var description = "A shell task failed with exit code \(terminationStatus)"
 +
-+							NSLog("errorString: «\(errorString)», description: «\(description)»")
++							NSLog("stdout: «\(_makeString(stdoutData))», errorString: «\(errorString)», description: «\(description)»")
 +
  							if !errorString.isEmpty {
  								description += ":\n\(errorString)"
