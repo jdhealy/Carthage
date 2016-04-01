@@ -9,8 +9,8 @@ install: true
 git:
   submodules: false
 script: |
-	export HOMEBREW_VERBOSE='true'
-	brew uninstall git
-	brew install https://raw.githubusercontent.com/Homebrew/homebrew/7f25b0865af022f56cc9067be989a548fd34733e/Library/Formula/git.rb
-	git --version
-	BUILD_TOOL=xctool script/cibuild
+  export HOMEBREW_VERBOSE='true'
+  brew uninstall git
+  brew install https://raw.githubusercontent.com/Homebrew/homebrew/7f25b0865af022f56cc9067be989a548fd34733e/Library/Formula/git.rb
+  git --version
+  BUILD_TOOL=xctool script/cibuild
