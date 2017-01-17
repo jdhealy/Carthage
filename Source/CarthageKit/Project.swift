@@ -586,11 +586,11 @@ public final class Project {
 				/// or the submodule to be added at this path given the `--use-submodules` flag.
 				func submodule() -> Submodule? {
 					if var foundSubmodule = submodulesByPath[project.relativePath] {
-						foundSubmodule.URL = repositoryURLForProject(project, preferHTTPS: self.preferHTTPS)
-						foundSubmodule.SHA = revision
+						foundSubmodule.url = repositoryURLForProject(project, preferHTTPS: self.preferHTTPS)
+						foundSubmodule.sha = revision
 						return foundSubmodule
 					} else if self.useSubmodules {
-						return Submodule(name: project.relativePath, path: project.relativePath, URL: repositoryURLForProject(project, preferHTTPS: self.preferHTTPS), SHA: revision)
+						return Submodule(name: project.relativePath, path: project.relativePath, url: repositoryURLForProject(project, preferHTTPS: self.preferHTTPS), sha: revision)
 					} else {
 						return nil
 					}
@@ -716,7 +716,7 @@ public final class Project {
 		let dependencyCheckoutsURL = dependencyURL.appendingPathComponent(CarthageProjectCheckoutsPath, isDirectory: true).URLByResolvingSymlinksInPath!
 		let fileManager = NSFileManager.defaultManager()
 
-		return self.dependenciesForDependency(dependency)
+		return self.dependencyProjects(for: dependency)
 			.zipWith( // file system objects from git in `CarthageProjectCheckoutsPath` which might conflict with symlinks.
 				launchGitTask(
 					// ls-tree, because `ls-files` returns no output (for all instances I've seen) on bare repos.
@@ -778,7 +778,7 @@ public final class Project {
 					do {
 						try fileManager.createSymbolicLinkAtPath(dependencyCheckoutURL.path!, withDestinationPath: linkDestinationPath)
 					} catch let error as NSError {
-						return .Failure(.WriteFailed(dependencyCheckoutURL, error))
+						return .Failure(.writeFailed(dependencyCheckoutURL, error))
 					}
 				}
 
