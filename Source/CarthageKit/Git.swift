@@ -269,7 +269,7 @@ public func contentsOfFileInRepository(repositoryFileURL: URL, _ path: String, r
 /// will be created.
 ///
 /// Submodules of the working tree must be handled seperately.
-public func checkoutRepositoryToDirectory(repositoryFileURL: NSURL, _ workingDirectoryURL: NSURL, revision: String = "HEAD") -> SignalProducer<(), CarthageError> {
+public func checkoutRepositoryToDirectory(repositoryFileURL: URL, _ workingDirectoryURL: URL, revision: String = "HEAD") -> SignalProducer<(), CarthageError> {
 	return SignalProducer.attempt { () -> Result<[String: String], CarthageError> in
 			do {
 				try FileManager.`default`.createDirectory(at: workingDirectoryURL, withIntermediateDirectories: true)
@@ -281,7 +281,7 @@ public func checkoutRepositoryToDirectory(repositoryFileURL: NSURL, _ workingDir
 			environment["GIT_WORK_TREE"] = workingDirectoryURL.carthage_path
 			return .success(environment)
 		}
-		.flatMap(.Concat) { environment in launchGitTask([ "checkout", "--quiet", "--force", revision ], repositoryFileURL: repositoryFileURL, environment: environment) }
+		.flatMap(.concat) { environment in launchGitTask([ "checkout", "--quiet", "--force", revision ], repositoryFileURL: repositoryFileURL, environment: environment) }
 		.then(.empty)
 }
 
