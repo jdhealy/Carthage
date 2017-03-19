@@ -24,7 +24,7 @@ setup() {
 	mkdir -p "$(project_directory)" && cd "$(project_directory)"
 
 	cat > Cartfile <<-EOF
-		git "file://${extracted_directory}/SourceRepos/TestFramework1" "regression-nil-url-from-git-top-level"
+		git "file://${extracted_directory}/SourceRepos/TestFramework2" "regression-nil-url-from-git-top-level"
 	EOF
 
 	# Optionally, only if environment variable `CARTHAGE_INTEGRATION_CLEAN_DEPENDENCIES_CACHE` is manually set:
@@ -37,23 +37,17 @@ teardown() {
 	cd $BATS_TEST_DIRNAME
 }
 
-carthage-and-check-illegal-instruction() {
-	while read -r line; do
-		if [[ ${line} == 'Illegal instruction' ]]; then
-			# unsafely kill all carthage instances, only on CI
-			if [[ ${CI} != 'false' ]] && [[ -n ${CI+x} ]]; then
-				killall -9 carthage || true
-			fi
-
-			return 1
-		fi
-	done < <(carthage $@)
-}
-
 # `URL(string:)` can sometimes return nil in cases where `URL(fileURLWithPath:)`
 # and `FileManager.isReadableFile(atPath:)` both validate the path.
 # See: <https://github.com/Carthage/Carthage/pull/1806#issue-211165517>.
 @test "Check for regression, nil URL from git “top level” causes illegal instruction with implicitly forced unwrap" {
 	# last component of `project_directory` is “Integration·Test·Pröject”.
-	carthage-and-check-illegal-instruction bootstrap --no-build --no-use-binaries
+	echo 'Carthage/Build' > .gitignore
+	git init && git-commit 'Initialize project.'
+
+	python ${BATS_TEST_DIRNAME:?}/Utilities/carthage-bootstrap-and-check-illegal-instruction.py
+	git add --all -v
+	git-commit 'Add submodule.'
+
+	python ${BATS_TEST_DIRNAME:?}/Utilities/carthage-bootstrap-and-check-illegal-instruction.py
 }
