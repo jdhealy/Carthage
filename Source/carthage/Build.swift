@@ -95,7 +95,27 @@ public struct BuildCommand: CommandProtocol {
 
 				let formatting = options.colorOptions.formatting
 
+				var threadSanitizerErrorParser = ThreadSanitizerErrorParser()
+
+				typealias MaterializedEvent = Signal<TaskEvent<(ProjectLocator, String)>, CarthageError>.Event
+
 				return buildProgress
+					.materialize()
+					.map { (event: MaterializedEvent) -> MaterializedEvent in
+						// ∆∆∆ unfortunately, `stdout`
+						if case .some(.standardOutput(let data)) = event.value {
+							_ = threadSanitizerErrorParser.parse(data)
+						}
+
+						switch event {
+						case .value:
+							return event
+
+						case .failed, .completed, .interrupted:
+							return threadSanitizerErrorParser.error().map(MaterializedEvent.failed) ?? event
+						}
+					}
+					.dematerialize()
 					.mapError { error -> CarthageError in
 						if case let .buildFailed(taskError, _) = error {
 							return .buildFailed(taskError, log: temporaryURL)
@@ -350,6 +370,46 @@ extension BuildPlatform: ArgumentProtocol {
 				}
 			}
 			return .multiple(buildPlatforms)
+		}
+	}
+}
+
+struct ThreadSanitizerErrorParser {
+	private var outputWorkingSet = Data()
+
+	enum FoundState {
+		case found
+		case notFound
+	}
+
+	mutating func error() -> CarthageError? {
+		guard parse() == .found else { return nil }
+
+		return CarthageError.internalError(description: String(data: outputWorkingSet, encoding: .utf8)!) // ∆∆∆
+	}
+
+	mutating func parse(_ data: Data? = nil) -> FoundState {
+		let errorsToMatch = [
+			"error: No targets could be built for architectures and platforms which support the Thread Sanitizer.",
+			"error: unsupported option '-sanitize=thread'"
+		].map { $0.data(using: .utf8)! }
+
+		if errorsToMatch.contains(outputWorkingSet) { return .found }
+
+		if let data = data { outputWorkingSet.append(data) }
+
+		switch errorsToMatch.flatMap({ outputWorkingSet.range(of: $0) }).first {
+		case .some(let range) where range.lowerBound != 0:
+			outputWorkingSet = Data(outputWorkingSet[range])
+			return .found
+
+		case .some:
+			return .found
+
+		case .none:
+			// reduce working set to the length of the longest matchable error
+			outputWorkingSet = Data(outputWorkingSet.suffix(errorsToMatch.first!.count))
+			return .notFound
 		}
 	}
 }
