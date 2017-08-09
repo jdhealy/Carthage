@@ -15,6 +15,11 @@ CARTHAGE_EXECUTABLE=$(BUILT_BUNDLE)/Contents/MacOS/carthage
 FRAMEWORKS_FOLDER=/Library/Frameworks
 BINARIES_FOLDER=/usr/local/bin
 
+# ZSH_COMMAND · run single command in `zsh` shell, ignoring most `zsh` startup files. 
+ZSH_COMMAND := ZDOTDIR='/var/empty' zsh -o NO_GLOBAL_RCS -c
+# RM_SAFELY · `rm -rf` ensuring first and only parameter is non-null, contains more than whitespace, non-root if resolving absolutely.
+RM_SAFELY := $(ZSH_COMMAND) '[[ ! $${1:?} =~ "^[[:space:]]+\$$" ]] && [[ $${1:A} != "/" ]] && [[ $${\#} == "1" ]] && noglob print -rn $${1:A}' --
+
 VERSION_STRING=$(shell git describe --abbrev=0 --tags)
 COMPONENTS_PLIST=Source/carthage/Components.plist
 DISTRIBUTION_PLIST=Source/carthage/Distribution.plist
@@ -34,14 +39,14 @@ clean:
 	rm -f "$(INTERNAL_PACKAGE)"
 	rm -f "$(OUTPUT_PACKAGE)"
 	rm -f "$(OUTPUT_FRAMEWORK_ZIP)"
-	rm -rf "$(TEMPORARY_FOLDER)"
+	$(RM_SAFELY) "$(TEMPORARY_FOLDER)"
 	xcodebuild $(XCODEFLAGS) clean
 
 install: package
 	sudo installer -pkg $(OUTPUT_PACKAGE) -target /
 
 uninstall:
-	rm -rf "$(FRAMEWORKS_FOLDER)/$(OUTPUT_FRAMEWORK)"
+	$(RM_SAFELY) "$(FRAMEWORKS_FOLDER)/$(OUTPUT_FRAMEWORK)"
 	rm -f "$(BINARIES_FOLDER)/carthage"
 
 installables: clean bootstrap
@@ -50,7 +55,7 @@ installables: clean bootstrap
 	mkdir -p "$(TEMPORARY_FOLDER)$(FRAMEWORKS_FOLDER)" "$(TEMPORARY_FOLDER)$(BINARIES_FOLDER)"
 	mv -f "$(CARTHAGEKIT_BUNDLE)" "$(TEMPORARY_FOLDER)$(FRAMEWORKS_FOLDER)/$(OUTPUT_FRAMEWORK)"
 	mv -f "$(CARTHAGE_EXECUTABLE)" "$(TEMPORARY_FOLDER)$(BINARIES_FOLDER)/carthage"
-	rm -rf "$(BUILT_BUNDLE)"
+	$(RM_SAFELY) "$(BUILT_BUNDLE)"
 
 prefix_install: installables
 	mkdir -p "$(PREFIX)/Frameworks" "$(PREFIX)/bin"
@@ -80,7 +85,7 @@ swiftpm:
 	swift build -c release -Xswiftc -static-stdlib
 
 swiftpm_test:
-	rm -rf ./.build/debug/CarthagePackageTests.xctest
+	$(RM_SAFELY) ./.build/debug/CarthagePackageTests.xctest
 	SWIFTPM_TEST_Carthage=YES swift test --specifier "" # Make SwiftPM just build the test bundle without running it
 	cp -R Tests/CarthageKitTests/Resources ./.build/debug/CarthagePackageTests.xctest/Contents
 	cp Tests/CarthageKitTests/fixtures/CartfilePrivateOnly.zip ./.build/debug/CarthagePackageTests.xctest/Contents/Resources
