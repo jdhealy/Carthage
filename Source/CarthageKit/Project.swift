@@ -139,6 +139,47 @@ public final class Project { // swiftlint:disable:this type_body_length
 	private lazy var xcodeVersionDirectory: String = XcodeVersion.make()
 		.map { "\($0.version)_\($0.buildVersion)" } ?? "Unknown"
 
+	// ???: When to run this to best ensure its success?
+	public var misnamedCartfiles: SignalProducer<[([String], Dependency, PinnedVersion)], CarthageError> {
+		return self.loadResolvedCartfile()
+			.flatMapError { _ in SignalProducer<ResolvedCartfile, NoError>.empty }
+			.map { cartfile in cartfile.dependencies }
+			.flatMap(.race) { graph -> SignalProducer<[([String], Dependency, PinnedVersion)], CarthageError> in
+				// ???: Dependency injecting `filter` into `listAtRoot` refused to compile (seemingly some broken compilation step)
+				let filter = Constants.Project.AllCartfiles.check
+
+				func listAtRoot(dependency: Dependency, version: PinnedVersion) -> SignalProducer<([String], Dependency, PinnedVersion), CarthageError> {
+					return self.cloneOrFetchDependency(dependency, commitish: version.commitish)
+						.flatMap(.race) {
+							// list names of file-system resources at root (trailing slash is necessary) of repository and filter
+							list(treeish: version.commitish, atPath: "./", inRepository: $0 as URL).filter(filter)
+						}
+						.collect()
+						.map { names in (names, dependency, version) }
+				}
+
+				let graphSignalProducer = SignalProducer<(Dependency, PinnedVersion), NoError>(graph.lazy.map { ($0.0, $0.1) })
+				return graphSignalProducer.flatMap(.merge, listAtRoot).collect()
+			}
+	}
+
+	func misnamedCartfiles(containedWithin directoryURL: URL) -> SignalProducer<([String], URL), CarthageError> {
+		return SignalProducer(value: directoryURL)
+			.attemptMap {
+				Result(at: $0, carthageError: CarthageError.readFailed, attempt: {
+					let contents = try FileManager.default.contentsOfDirectory(at: $0, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)
+
+					return contents
+						.flatMap {
+							let result = $0.copyResource(bridgingFromType: CFString.self, forIdentifierKey: kCFURLNameKey) as Result<String, CarthageError>
+							guard let name = result.value, Constants.Project.AllCartfiles.check(name) else { return nil }
+							return name /* of misnamed Cartfile */
+						}
+				})
+			}
+			.map { names in (names, directoryURL) }
+	}
+
 	/// Attempts to load Cartfile or Cartfile.private from the given directory,
 	/// merging their dependencies.
 	public func loadCombinedCartfile() -> SignalProducer<Cartfile, CarthageError> {

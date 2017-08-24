@@ -91,6 +91,22 @@ public struct Constants {
 
 		/// The relative path to a project's Cartfile.resolved.
 		public static let resolvedCartfilePath = "Cartfile.resolved"
+		
+		public struct AllCartfiles {
+			/// The relative paths to all a project's Cartfiles.
+			public static let paths = [Constants.Project.cartfilePath, Constants.Project.privateCartfilePath, Constants.Project.resolvedCartfilePath]
+
+			public static func check(_ name: String) -> Bool {
+				return Constants.Project.AllCartfiles.paths.contains { someCartfilePath in
+					// Ensure we never violate the following, however unlikely to change…
+					assert(someCartfilePath.decomposedStringWithCanonicalMapping == someCartfilePath)
+					assert(someCartfilePath.precomposedStringWithCanonicalMapping == someCartfilePath)
+					
+					return name.lowercased() == someCartfilePath.lowercased() && name != someCartfilePath
+				}
+			}
+
+		}
 
 		/// The text that needs to exist in a GitHub Release asset's name, for it to be
 		/// tried as a binary framework.
