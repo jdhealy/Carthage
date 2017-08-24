@@ -243,6 +243,43 @@ extension Result where Error == CarthageError {
 }
 
 extension URL {
+	func copyResource<CFType, BridgedSwiftType>(bridgingFromType: CFType, forIdentifierKey key: CFString) throws -> BridgedSwiftType? {
+		var error: Unmanaged<CFError>?
+		var receivingItem: CFType?
+
+		guard CFURLCopyResourcePropertyForKey(self as CFURL, key, &receivingItem, &error) else {
+			guard let error: CFError = error?.takeRetainedValue() else { return nil }
+			throw error
+		}
+
+		guard let item = receivingItem as? BridgedSwiftType else {
+			throw NSError(domain: NSPOSIXErrorDomain, code: Int(POSIXError.EIO.rawValue), userInfo: [
+				"Bridged Swift Type": String(describing: BridgedSwiftType.self),
+				"CoreFoundation Type": String(describing: CFType.self),
+				// TODO: Add memory addresses, etc…
+			])
+		}
+
+		return item
+	}
+
+	func copyResource<CFType, BridgedSwiftType>(
+		bridgingFromType: CFType,
+		forIdentifierKey key: CFString,
+		carthageError: (URL, NSError?) -> CarthageError = CarthageError.readFailed
+	) -> Result<BridgedSwiftType, CarthageError> {
+		do {
+			return try self
+				.copyResource(bridgingFromType: CFType.self, forIdentifierKey: key)
+				.map(Result.success)
+				?? .failure(carthageError(self, nil))
+		} catch let error as NSError {
+			return .failure(carthageError(self, error))
+		}
+	}
+}
+
+extension URL {
 	/// The type identifier of the receiver, or an error if it was unable to be
 	/// determined.
 	internal var typeIdentifier: Result<String, CarthageError> {
