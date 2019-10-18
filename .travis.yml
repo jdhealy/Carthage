@@ -8,6 +8,7 @@ cache:
 branches:
   only:
     - master
+    - /test\-on\-travis[^\w].*/
 matrix:
   include:
     - os: osx
