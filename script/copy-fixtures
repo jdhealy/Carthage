@@ -20,4 +20,4 @@ do
 done
 
 rm -Rf "$destination/DynamicAndStaticSameOldSameOld"
-ditto "$destination/DynamicAndStatic" "$destination/DynamicAndStaticSameOldSameOld"
+ditto "$destination/DynamicAndStatic" "$destination/SampleMultipleSubprojectsSameOldSameOld"
