@@ -10,9 +10,9 @@ import XCDBLD
 
 class XcodeSpec: QuickSpec {
 	override func spec() {
-		// The fixture is maintained at https://github.com/ikesyo/carthage-fixtures-ReactiveCocoaLayout
-		let directoryURL = Bundle(for: type(of: self)).url(forResource: "carthage-fixtures-ReactiveCocoaLayout-master", withExtension: nil)!
-		let projectURL = directoryURL.appendingPathComponent("ReactiveCocoaLayout.xcodeproj")
+		let directoryURL = Bundle(for: type(of: self)).url(forResource: "DependencyTest", withExtension: nil)!
+		let AAAAADirectoryThatWeCopyFromTestFramework1 = directoryURL.appendingPathComponent("AAAAA")
+		let projectURL = AAAAADirectoryThatWeCopyFromTestFramework1.appendingPathComponent("TestFramework1.xcodeproj")
 		let buildFolderURL = directoryURL.appendingPathComponent(Constants.binariesFolderPath)
 		let targetFolderURL = URL(
 			fileURLWithPath: (NSTemporaryDirectory() as NSString).appendingPathComponent(ProcessInfo.processInfo.globallyUniqueString),
@@ -20,12 +20,12 @@ class XcodeSpec: QuickSpec {
 		)
 
 		beforeEach {
-			_ = try? FileManager.default.removeItem(at: buildFolderURL)
-			expect { try FileManager.default.createDirectory(atPath: targetFolderURL.path, withIntermediateDirectories: true) }.notTo(throwError())
+			_ = try? FileManager.default.removeItem(at: AAAAADirectoryThatWeCopyFromTestFramework1)
+			expect { try FileManager.default.copyItem(at: directoryURL.appendingPathComponent("SourceRepos").appendingPathComponent("TestFramework1"), to: AAAAADirectoryThatWeCopyFromTestFramework1)}.notTo(throwError())
 		}
 
 		afterEach {
-			_ = try? FileManager.default.removeItem(at: targetFolderURL)
+			_ = try? FileManager.default.removeItem(at: AAAAADirectoryThatWeCopyFromTestFramework1)
 		}
 
 		describe("determineSwiftInformation:") {
@@ -156,8 +156,8 @@ class XcodeSpec: QuickSpec {
 
 		it("should build for all platforms") {
 			let dependencies = [
-				Dependency.gitHub(.dotCom, Repository(owner: "github", name: "Archimedes")),
-				Dependency.gitHub(.dotCom, Repository(owner: "ReactiveCocoa", name: "ReactiveCocoa")),
+				Dependency.gitHub(.dotCom, Repository(owner: "Carthage", name: "TestFramework3")),
+				Dependency.gitHub(.dotCom, Repository(owner: "Carthage", name: "TestFramework2")),
 			]
 			let version = PinnedVersion("0.1")
 
@@ -183,7 +183,7 @@ class XcodeSpec: QuickSpec {
 
 			// Verify that the build products exist at the top level.
 			var dependencyNames = dependencies.map { dependency in dependency.name }
-			dependencyNames.append("ReactiveCocoaLayout")
+			dependencyNames.append("TestFramework1")
 
 			for dependency in dependencyNames {
 				let macPath = buildFolderURL.appendingPathComponent("Mac/\(dependency).framework").path
@@ -195,7 +195,7 @@ class XcodeSpec: QuickSpec {
 					expect(path).to(beExistingDirectory())
 				}
 			}
-			let frameworkFolderURL = buildFolderURL.appendingPathComponent("iOS/ReactiveCocoaLayout.framework")
+			let frameworkFolderURL = buildFolderURL.appendingPathComponent("iOS/TestFramework3.framework")
 
 			// Verify that the iOS framework is a universal binary for device
 			// and simulator.
@@ -204,13 +204,8 @@ class XcodeSpec: QuickSpec {
 
 			expect(architectures?.value).to(contain("i386", "armv7", "arm64"))
 
-			// Verify that our dummy framework in the RCL iOS scheme built as
-			// well.
-			let auxiliaryFrameworkPath = buildFolderURL.appendingPathComponent("iOS/AuxiliaryFramework.framework").path
-			expect(auxiliaryFrameworkPath).to(beExistingDirectory())
-
-			// Copy ReactiveCocoaLayout.framework to the temporary folder.
-			let targetURL = targetFolderURL.appendingPathComponent("ReactiveCocoaLayout.framework", isDirectory: true)
+			// Copy TestFramework1.framework to the temporary folder.
+			let targetURL = targetFolderURL.appendingPathComponent("TestFramework1.framework", isDirectory: true)
 
 			let resultURL = copyProduct(frameworkFolderURL, targetURL).single()
 			expect(resultURL?.value) == targetURL
@@ -354,7 +349,7 @@ class XcodeSpec: QuickSpec {
 		}
 
 		it("should build for one platform") {
-			let dependency = Dependency.gitHub(.dotCom, Repository(owner: "github", name: "Archimedes"))
+			let dependency = Dependency.gitHub(.dotCom, Repository(owner: "Carthage", name: "TestFramework3"))
 			let version = PinnedVersion("0.1")
 			let result = build(dependency: dependency, version: version, directoryURL, withOptions: BuildOptions(configuration: "Debug", platforms: [ .macOS ]))
 				.ignoreTaskData()
@@ -370,7 +365,7 @@ class XcodeSpec: QuickSpec {
 			expect(path).to(beExistingDirectory())
 
 			// Verify that the version file exists.
-			let versionFileURL = URL(fileURLWithPath: buildFolderURL.appendingPathComponent(".Archimedes.version").path)
+			let versionFileURL = URL(fileURLWithPath: buildFolderURL.appendingPathComponent(".\(dependency.name).version").path)
 			let versionFile = VersionFile(url: versionFileURL)
 			expect(versionFile).notTo(beNil())
 			
@@ -380,7 +375,7 @@ class XcodeSpec: QuickSpec {
 		}
 
 		it("should build for multiple platforms") {
-			let dependency = Dependency.gitHub(.dotCom, Repository(owner: "github", name: "Archimedes"))
+			let dependency = Dependency.gitHub(.dotCom, Repository(owner: "Carthage", name: "TestFramework3"))
 			let version = PinnedVersion("0.1")
 			let result = build(dependency: dependency, version: version, directoryURL, withOptions: BuildOptions(configuration: "Debug", platforms: [ .macOS, .iOS ]))
 				.ignoreTaskData()
@@ -416,7 +411,7 @@ class XcodeSpec: QuickSpec {
 		}
 
 		it("should not locate the project from a directory not containing it") {
-			let result = ProjectLocator.locate(in: directoryURL.appendingPathComponent("ReactiveCocoaLayout")).first()
+			let result = ProjectLocator.locate(in: AAAAADirectoryThatWeCopyFromTestFramework1.appendingPathComponent("TestFramework1_iOS")).first()
 			expect(result).to(beNil())
 		}
 
