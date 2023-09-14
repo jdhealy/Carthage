@@ -163,7 +163,7 @@ class XcodeSpec: QuickSpec {
 			let version = PinnedVersion("0.1")
 
 			for dependency in dependencies {
-				let result = build(dependency: dependency, version: version, AAAAADirectoryThatWeCopyFromTestFramework2, withOptions: BuildOptions(configuration: "Debug"))
+				let result = build(dependency: dependency, version: version, directoryURL, withOptions: BuildOptions(configuration: "Debug"))
 					.ignoreTaskData()
 					.on(value: { project, scheme in // swiftlint:disable:this end_closure
 						NSLog("Building scheme \"\(scheme)\" in \(project)")
@@ -173,7 +173,7 @@ class XcodeSpec: QuickSpec {
 				expect(result.error).to(beNil())
 			}
 
-			let result = buildInDirectory(directoryURL, withOptions: BuildOptions(configuration: "Debug"), rootDirectoryURL: AAAAADirectoryThatWeCopyFromTestFramework2)
+			let result = buildInDirectory(directoryURL, withOptions: BuildOptions(configuration: "Debug"), rootDirectoryURL: directoryURL)
 				.ignoreTaskData()
 				.on(value: { project, scheme in // swiftlint:disable:this closure_params_parantheses
 					NSLog("Building scheme \"\(scheme)\" in \(project)")
@@ -371,7 +371,7 @@ class XcodeSpec: QuickSpec {
 		it("should build for one platform") {
 			let dependency = Dependency.gitHub(.dotCom, Repository(owner: "Carthage", name: "TestFramework3"))
 			let version = PinnedVersion("0.1")
-			let result = build(dependency: dependency, version: version, AAAAADirectoryThatWeCopyFromTestFramework2, withOptions: BuildOptions(configuration: "Debug", platforms: [ .macOS ]))
+			let result = build(dependency: dependency, version: version, directoryURL, withOptions: BuildOptions(configuration: "Debug", platforms: [ .macOS ]))
 				.ignoreTaskData()
 				.on(value: { project, scheme in
 					NSLog("Building scheme \"\(scheme)\" in \(project)")
@@ -397,7 +397,7 @@ class XcodeSpec: QuickSpec {
 		it("should build for multiple platforms") {
 			let dependency = Dependency.gitHub(.dotCom, Repository(owner: "Carthage", name: "TestFramework3"))
 			let version = PinnedVersion("0.1")
-			let result = build(dependency: dependency, version: version, AAAAADirectoryThatWeCopyFromTestFramework2, withOptions: BuildOptions(configuration: "Debug", platforms: [ .macOS, .iOS ]))
+			let result = build(dependency: dependency, version: version, directoryURL, withOptions: BuildOptions(configuration: "Debug", platforms: [ .macOS, .iOS ]))
 				.ignoreTaskData()
 				.on(value: { project, scheme in
 					NSLog("Building scheme \"\(scheme)\" in \(project)")
@@ -420,7 +420,7 @@ class XcodeSpec: QuickSpec {
 			let result = ProjectLocator.locate(in: directoryURL).first()
 			expect(result).notTo(beNil())
 			expect(result?.error).to(beNil())
-			expect(result?.value?.fileURL.absoluteString) == projectURL.absoluteString
+			expect(result?.value?.fileURL) == projectURL
 			expect(result?.value) == .projectFile(projectURL)
 		}
 
@@ -428,7 +428,7 @@ class XcodeSpec: QuickSpec {
 			let result = ProjectLocator.locate(in: directoryURL.deletingLastPathComponent()).collect().first()
 			expect(result).notTo(beNil())
 			expect(result?.error).to(beNil())
-			expect(result?.value?.map { $0.fileURL.absoluteString }).to(contain(projectURL.absoluteString))
+			expect(result?.value?.map { $0.fileURL }).to(contain(projectURL))
 			expect(result?.value).to(contain(.projectFile(projectURL)))
 		}
 
