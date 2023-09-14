@@ -420,6 +420,7 @@ class XcodeSpec: QuickSpec {
 			let result = ProjectLocator.locate(in: directoryURL).first()
 			expect(result).notTo(beNil())
 			expect(result?.error).to(beNil())
+			expect(result?.value?.fileURL) == projectURL
 			expect(result?.value) == .projectFile(projectURL)
 		}
 
@@ -427,6 +428,7 @@ class XcodeSpec: QuickSpec {
 			let result = ProjectLocator.locate(in: directoryURL.deletingLastPathComponent()).collect().first()
 			expect(result).notTo(beNil())
 			expect(result?.error).to(beNil())
+			expect(result?.value?.map { $0.fileURL }).to(contain(projectURL))
 			expect(result?.value).to(contain(.projectFile(projectURL)))
 		}
 
