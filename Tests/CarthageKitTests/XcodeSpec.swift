@@ -19,12 +19,16 @@ class XcodeSpec: QuickSpec {
 		)
 
 		beforeEach {
-			_ = try? FileManager.default.removeItem(at: buildFolderURL)
+			_ = try? FileManager.default.removeItem(at: buildFolderURL.deletingLastPathComponent())
+			expect { try FileManager.default.createDirectory(at: directoryURL.appendingPathComponent(Constants.checkoutsFolderPath), withIntermediateDirectories: true) }.notTo(throwError())
+			expect(ReactiveTask.Task("/bin/zsh", arguments: ["-c", "aa archive -d $PWD -o /dev/stdout | aa extract -d Carthage/Checkouts/TestFramework"], workingDirectoryPath: directoryURL.path).launch().wait().error).to(beNil())
 			expect { try FileManager.default.createDirectory(atPath: targetFolderURL.path, withIntermediateDirectories: true) }.notTo(throwError())
 		}
 
 		afterEach {
 			_ = try? FileManager.default.removeItem(at: targetFolderURL)
+			_ = try? FileManager.default.removeItem(at: buildFolderURL.deletingLastPathComponent())
+			print(ReactiveTask.Task("/usr/bin/du", arguments: [buildFolderURL.deletingLastPathComponent().path], workingDirectoryPath: directoryURL.path).launch().wait())
 		}
 
 		describe("determineSwiftInformation:") {
