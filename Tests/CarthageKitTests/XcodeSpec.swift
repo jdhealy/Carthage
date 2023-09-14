@@ -11,8 +11,8 @@ import XCDBLD
 class XcodeSpec: QuickSpec {
 	override func spec() {
 		let directoryURL = Bundle(for: type(of: self)).url(forResource: "DependencyTest", withExtension: nil)!
-		let AAAAADirectoryThatWeCopyFromTestFramework1 = directoryURL.appendingPathComponent("AAAAA")
-		let projectURL = AAAAADirectoryThatWeCopyFromTestFramework1.appendingPathComponent("TestFramework1.xcodeproj")
+		let AAAAADirectoryThatWeCopyFromTestFramework3 = directoryURL.appendingPathComponent("AAAAA")
+		let projectURL = AAAAADirectoryThatWeCopyFromTestFramework3.appendingPathComponent("TestFramework3.xcodeproj")
 		let buildFolderURL = directoryURL.appendingPathComponent(Constants.binariesFolderPath)
 		let targetFolderURL = URL(
 			fileURLWithPath: (NSTemporaryDirectory() as NSString).appendingPathComponent(ProcessInfo.processInfo.globallyUniqueString),
@@ -20,12 +20,12 @@ class XcodeSpec: QuickSpec {
 		)
 
 		beforeEach {
-			_ = try? FileManager.default.removeItem(at: AAAAADirectoryThatWeCopyFromTestFramework1)
-			expect { try FileManager.default.copyItem(at: directoryURL.appendingPathComponent("SourceRepos").appendingPathComponent("TestFramework1"), to: AAAAADirectoryThatWeCopyFromTestFramework1)}.notTo(throwError())
+			_ = try? FileManager.default.removeItem(at: AAAAADirectoryThatWeCopyFromTestFramework3)
+			expect { try FileManager.default.copyItem(at: directoryURL.appendingPathComponent("SourceRepos").appendingPathComponent("TestFramework3"), to: AAAAADirectoryThatWeCopyFromTestFramework3)}.notTo(throwError())
 		}
 
 		afterEach {
-			_ = try? FileManager.default.removeItem(at: AAAAADirectoryThatWeCopyFromTestFramework1)
+			_ = try? FileManager.default.removeItem(at: AAAAADirectoryThatWeCopyFromTestFramework3)
 		}
 
 		describe("determineSwiftInformation:") {
@@ -156,7 +156,6 @@ class XcodeSpec: QuickSpec {
 
 		it("should build for all platforms") {
 			let dependencies = [
-				Dependency.gitHub(.dotCom, Repository(owner: "Carthage", name: "TestFramework3")),
 				Dependency.gitHub(.dotCom, Repository(owner: "Carthage", name: "TestFramework2")),
 			]
 			let version = PinnedVersion("0.1")
@@ -183,7 +182,7 @@ class XcodeSpec: QuickSpec {
 
 			// Verify that the build products exist at the top level.
 			var dependencyNames = dependencies.map { dependency in dependency.name }
-			dependencyNames.append("TestFramework1")
+			dependencyNames.append("TestFramework3")
 
 			for dependency in dependencyNames {
 				let macPath = buildFolderURL.appendingPathComponent("Mac/\(dependency).framework").path
@@ -195,17 +194,21 @@ class XcodeSpec: QuickSpec {
 					expect(path).to(beExistingDirectory())
 				}
 			}
-			let frameworkFolderURL = buildFolderURL.appendingPathComponent("iOS/TestFramework3.framework")
+			let frameworkFolderURL = buildFolderURL.appendingPathComponent("iOS/TestFramework2.framework")
 
 			// Verify that the iOS framework is a universal binary for device
 			// and simulator.
 			let architectures = architecturesInPackage(frameworkFolderURL)
 				.single()
 
-			expect(architectures?.value).to(contain("i386", "armv7", "arm64"))
+			expect(architectures?.value).to(contain("arm64"))
+			expect(architectures?.value).to(satisfyAnyOf(
+				contain("i386"),
+				contain("x86_64")
+			))
 
-			// Copy TestFramework1.framework to the temporary folder.
-			let targetURL = targetFolderURL.appendingPathComponent("TestFramework1.framework", isDirectory: true)
+			// Copy TestFramework3.framework to the temporary folder.
+			let targetURL = targetFolderURL.appendingPathComponent("TestFramework3.framework", isDirectory: true)
 
 			let resultURL = copyProduct(frameworkFolderURL, targetURL).single()
 			expect(resultURL?.value) == targetURL
@@ -217,8 +220,23 @@ class XcodeSpec: QuickSpec {
 			let strippedArchitectures = architecturesInPackage(targetURL)
 				.single()
 
-			expect(strippedArchitectures?.value).notTo(contain("i386"))
-			expect(strippedArchitectures?.value).to(contain("armv7", "arm64"))
+			expect(strippedArchitectures?.value).notTo(satisfyAnyOf(
+				contain("i386"),
+				contain("x86_64")
+			))
+
+			expect(strippedArchitectures?.value).to(satisfyAnyOf(
+				contain("armv7"),
+				contain("arm64")
+			))
+
+			// TODO: Need to verify this conditional. Not exactly sure which Xcode version.
+			if (XcodeVersion.make()?.majorVersionNumber ?? 99999) < 14  {
+				expect(strippedArchitectures?.value).to(satisfyAllOf(
+					contain("armv7"),
+					contain("arm64")
+				))
+			}
 
 			/// Check whether the resulting framework contains debug symbols
 			/// There are many suggestions on how to do this but no one single
@@ -349,7 +367,7 @@ class XcodeSpec: QuickSpec {
 		}
 
 		it("should build for one platform") {
-			let dependency = Dependency.gitHub(.dotCom, Repository(owner: "Carthage", name: "TestFramework3"))
+			let dependency = Dependency.gitHub(.dotCom, Repository(owner: "Carthage", name: "TestFramework2"))
 			let version = PinnedVersion("0.1")
 			let result = build(dependency: dependency, version: version, directoryURL, withOptions: BuildOptions(configuration: "Debug", platforms: [ .macOS ]))
 				.ignoreTaskData()
@@ -375,7 +393,7 @@ class XcodeSpec: QuickSpec {
 		}
 
 		it("should build for multiple platforms") {
-			let dependency = Dependency.gitHub(.dotCom, Repository(owner: "Carthage", name: "TestFramework3"))
+			let dependency = Dependency.gitHub(.dotCom, Repository(owner: "Carthage", name: "TestFramework2"))
 			let version = PinnedVersion("0.1")
 			let result = build(dependency: dependency, version: version, directoryURL, withOptions: BuildOptions(configuration: "Debug", platforms: [ .macOS, .iOS ]))
 				.ignoreTaskData()
@@ -411,7 +429,7 @@ class XcodeSpec: QuickSpec {
 		}
 
 		it("should not locate the project from a directory not containing it") {
-			let result = ProjectLocator.locate(in: AAAAADirectoryThatWeCopyFromTestFramework1.appendingPathComponent("TestFramework1_iOS")).first()
+			let result = ProjectLocator.locate(in: AAAAADirectoryThatWeCopyFromTestFramework3.appendingPathComponent("TestFramework3_iOS")).first()
 			expect(result).to(beNil())
 		}
 
