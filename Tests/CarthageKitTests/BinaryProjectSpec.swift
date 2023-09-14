@@ -11,8 +11,8 @@ class BinaryProjectSpec: QuickSpec {
 				let jsonData = (
 					"{" +
 					"\"1.0\": \"https://example.com/release/1.0.0/framework.zip\"," +
-					"\"1.0.1\": \"https://example.com/release/1.0.1/framework.zip?alt=https://my.domain.com/release/1.0.1/xcframework.zip&alt=https://my.domain.com/some/other/alternate.zip\"," +
-					"\"1.0.2\": \"https://example.com/release/1.0.2/framework.zip?alt=https%3A%2F%2Fmy.domain.com%2Frelease%2F1.0.2%2Fxcframework.zip\"" +
+					"\"1.0.1\": \"https://example.com/release/1.0.1/framework.zip?alt=https://example.com/release/1.0.1/xcframework.zip&alt=https://example.com/some/other/alternate.zip\"," +
+					"\"1.0.2\": \"https://example.com/release/1.0.2/framework.zip?alt=https%3A%2F%2Fexample.com%2Frelease%2F1.0.2%2Fxcframework.zip\"" +
 					"}"
 					).data(using: .utf8)!
 
