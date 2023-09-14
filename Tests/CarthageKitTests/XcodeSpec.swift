@@ -31,6 +31,7 @@ class XcodeSpec: QuickSpec {
 		describe("determineSwiftInformation:") {
 			let currentSwiftVersion = swiftVersion().single()?.value
 			#if !SWIFT_PACKAGE
+			/// Note: Some tests cover part of this in the non-Swift-Package case, such as "should determine that an ObjC framework is not a Swift framework"
 			let testSwiftFramework = "Quick.framework"
 			let currentDirectory = URL(fileURLWithPath: FileManager.default.currentDirectoryPath, isDirectory: true)
 			let testSwiftFrameworkURL = currentDirectory.appendingPathComponent(testSwiftFramework)
