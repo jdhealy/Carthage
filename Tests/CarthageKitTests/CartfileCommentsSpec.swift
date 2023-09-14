@@ -19,7 +19,7 @@ class CarfileCommentsSpec: QuickSpec {
 				]
 				.forEach {
 					let cartfileStringWithNoTrueComments = $0
-					expect(cartfileStringWithNoTrueComments.strippingTrailingCartfileComment).to(be(cartfileStringWithNoTrueComments))
+					expect(cartfileStringWithNoTrueComments.strippingTrailingCartfileComment).to(equal(cartfileStringWithNoTrueComments))
 				}
 			}
 			
@@ -31,7 +31,7 @@ class CarfileCommentsSpec: QuickSpec {
 				]
 				.forEach {
 					let cartfileStringWithNoTrueComments = $0
-					expect(cartfileStringWithNoTrueComments.strippingTrailingCartfileComment).to(be(cartfileStringWithNoTrueComments))
+					expect(cartfileStringWithNoTrueComments.strippingTrailingCartfileComment).to(equal(cartfileStringWithNoTrueComments))
 				}
 			}
 			
