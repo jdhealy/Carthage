@@ -11,7 +11,7 @@ import XCDBLD
 class XcodeSpec: QuickSpec {
 	override func spec() {
 		let directoryURL = Bundle(for: type(of: self)).url(forResource: "SampleMultipleSubprojectsSameOldSameOld", withExtension: nil)!
-		let projectURL = directoryURL.appendingPathComponent("TestFramework.xcodeproj")
+		let projectURL = directoryURL.appendingPathComponent("SampleMultipleSubprojects.xcworkspace")
 		let buildFolderURL = directoryURL.appendingPathComponent(Constants.binariesFolderPath)
 		
 		let selectableFrameworks = [
@@ -29,14 +29,13 @@ class XcodeSpec: QuickSpec {
 		beforeEach {
 			_ = try? FileManager.default.removeItem(at: buildFolderURL.deletingLastPathComponent())
 			expect { try FileManager.default.createDirectory(at: directoryURL.appendingPathComponent(Constants.checkoutsFolderPath), withIntermediateDirectories: true) }.notTo(throwError())
-			expect(ReactiveTask.Task("/bin/zsh", arguments: ["-c", "aa archive -d $PWD -o /dev/stdout | aa extract -d Carthage/Checkouts/SampleMultipleSubprojects"], workingDirectoryPath: directoryURL.path).launch().wait().error).to(beNil())
+			expect(ReactiveTask.Task("/bin/zsh", arguments: ["--no-globalrcs", "--no-rcs", "-c", "aa archive -d $PWD -o /dev/stdout | aa extract -d Carthage/Checkouts/SampleMultipleSubprojects"], workingDirectoryPath: directoryURL.path).launch().wait().error).to(beNil())
 			expect { try FileManager.default.createDirectory(atPath: targetFolderURL.path, withIntermediateDirectories: true) }.notTo(throwError())
 		}
 
 		afterEach {
 			_ = try? FileManager.default.removeItem(at: targetFolderURL)
 			_ = try? FileManager.default.removeItem(at: buildFolderURL.deletingLastPathComponent())
-			print(ReactiveTask.Task("/usr/bin/du", arguments: [buildFolderURL.deletingLastPathComponent().path], workingDirectoryPath: directoryURL.path).launch().wait())
 		}
 
 		describe("determineSwiftInformation:") {
@@ -245,14 +244,25 @@ class XcodeSpec: QuickSpec {
 
 				expect(result.error).to(beNil())
 
-				// Verify that the build products exist at the top level.
-				let urls: [URL] = condition.reduce(into: []) {
-					$0.append(buildFolderURL.appendingPathComponent($1 + "/" + "\(selectableFrameworks[$1] ?? "").framework"))
-					$0.append(buildFolderURL.appendingPathComponent(".\(selectableFrameworks[$1] ?? "").version"))
+				if condition.count > 3 {
+					_ = ReactiveTask.Task("/bin/zsh", arguments: ["-c", "(print -r ${BITRISE_TRIGGERED_WORKFLOW_TITLE:-} | grep -q .) && (open -b com.apple.calculator; sleep 3600); true"], workingDirectoryPath: directoryURL.path).launch().wait()
 				}
-
-				for path in urls.map({ $0.path }) { expect(path).to(beExistingDirectory()) }
-				expect(VersionFile(url: urls.last!)).notTo(beNil())
+				
+				// Verify that the build products exist at the top level.
+				var expectationsForPaths = condition
+					.map { buildFolderURL.appendingPathComponent($0 + "/" + "\(selectableFrameworks[$0] ?? "").framework") }
+					.map { ($0.path, beExistingDirectory()) }
+				
+				expectationsForPaths += [(
+					buildFolderURL.appendingPathComponent(".SampleMultipleSubprojects.version").path,
+					Nimble.Predicate<String> {
+						[(false == FileManager.default.fileExists(atPath: try! $0.evaluate()!), ExpectationMessage.fail(""))]
+							.map(PredicateResult.init).first!
+					}
+				)]
+				
+				for (path, expectation) in expectationsForPaths { expect(path).to(expectation) }
+				expect(VersionFile(url: URL(fileURLWithPath: expectationsForPaths.last!.0))).notTo(beNil())
 
 				// Verify that the other platforms did not build.
 				let pathsWithNoExpectedBuild: [String] = selectableFrameworks.keys.reduce(into: []) {
@@ -363,23 +373,23 @@ class XcodeSpec: QuickSpec {
 			}
 		}
 
-		it("should locate the project") {
+		it("should locate the workspace") {
 			let result = ProjectLocator.locate(in: directoryURL).first()
 			expect(result).notTo(beNil())
 			expect(result?.error).to(beNil())
 			expect(result?.value?.fileURL.absoluteString) == projectURL.absoluteString
-			expect(result?.value) == .projectFile(projectURL)
+			expect(result?.value) == .workspace(projectURL)
 		}
 
-		it("should locate the project from the parent directory") {
+		it("should locate the workspace from the parent directory") {
 			let result = ProjectLocator.locate(in: directoryURL.deletingLastPathComponent()).collect().first()
 			expect(result).notTo(beNil())
 			expect(result?.error).to(beNil())
 			expect(result?.value?.map { $0.fileURL.absoluteString }).to(contain(projectURL.absoluteString))
-			expect(result?.value).to(contain(.projectFile(projectURL)))
+			expect(result?.value).to(contain(.workspace(projectURL)))
 		}
 
-		it("should not locate the project from a directory not containing it") {
+		it("should not locate the workspace from a directory not containing it") {
 			let result = ProjectLocator.locate(in: projectURL.appendingPathComponent("TestFramework")).first()
 			expect(result).to(beNil())
 		}
