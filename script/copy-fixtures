@@ -19,5 +19,5 @@ do
 	unzip -q -d "$destination" "$current/../Tests/CarthageKitTests/fixtures/$fixture"
 done
 
-rm -Rf "$destination/DynamicAndStaticSameOldSameOld"
-ditto "$destination/DynamicAndStatic" "$destination/SampleMultipleSubprojectsSameOldSameOld"
+rm -Rf "$destination/SampleMultipleSubprojectsSameOldSameOld"
+ditto "$destination/SampleMultipleSubprojects" "$destination/SampleMultipleSubprojectsSameOldSameOld"

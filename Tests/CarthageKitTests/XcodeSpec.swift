@@ -273,7 +273,7 @@ class XcodeSpec: QuickSpec {
 					for path in paths { expect(path).to(beExistingDirectory()) }
 					
 					let frameworkFolderURL = [
-						paths.first(where: { $0.split(separator: "/").contains(["iOS"]) && $0.hasSuffix("dSYM") == false })
+						paths.first(where: { Array.firstIndex($0.split(separator: "/"))(of: "iOS") != nil && $0.hasSuffix("dSYM") == false })
 					]
 						.map { $0 ?? "/var/empty" }
 						.map { URL.init(fileURLWithPath: $0) }
